@@ -1,39 +1,42 @@
 Function OLOOKUP(LookupValue As Variant, _
                  TableRange As Range, _
-                 ReturnColumn As String, _
-                 Optional ExactMatch As Boolean = True)
+                 HeaderRef As Variant) As Variant
 
-    Dim LookupCol As Range
-    Dim ReturnCol As Range
-    Dim ColNum As Long
-    Dim ResultRow As Variant
+    Dim HeaderCell As Range
+    Dim LookupRange As Range
+    Dim HeaderName As String
+    Dim ReturnCol As Long
+    Dim FoundRow As Variant
 
-    ReturnColumn = UCase(ReturnColumn)
+    HeaderName = CStr(HeaderRef)
 
-    ColNum = Range(ReturnColumn & "1").Column
+    ReturnCol = 0
 
-    Set LookupCol = TableRange.Columns(1)
+    For Each HeaderCell In TableRange.Rows(1).Cells
 
-    Set ReturnCol = Columns(ColNum)
+        If Trim(UCase(HeaderCell.Value)) = Trim(UCase(HeaderName)) Then
 
-    If ExactMatch Then
+            ReturnCol = HeaderCell.Column - TableRange.Columns(1).Column + 1
+            Exit For
 
-        ResultRow = Application.Match(LookupValue, LookupCol, 0)
+        End If
 
-    Else
+    Next HeaderCell
 
-        ResultRow = Application.Match(LookupValue, LookupCol, 1)
-
+    If ReturnCol = 0 Then
+        OLOOKUP = "Header Not Found"
+        Exit Function
     End If
 
-    If IsError(ResultRow) Then
+    Set LookupRange = TableRange.Columns(1).Offset(1, 0).Resize(TableRange.Rows.Count - 1)
 
-        OLOOKUP = "Not Found"
+    FoundRow = Application.Match(LookupValue, LookupRange, 0)
 
-    Else
-
-        OLOOKUP = ReturnCol.Cells(ResultRow).Value
-
+    If IsError(FoundRow) Then
+        OLOOKUP = "Value Not Found"
+        Exit Function
     End If
+
+    OLOOKUP = TableRange.Cells(FoundRow + 1, ReturnCol).Value
 
 End Function
